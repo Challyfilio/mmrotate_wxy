@@ -4,7 +4,7 @@ import torch
 from mmrotate.core import rbbox2roi
 from ..builder import ROTATED_HEADS
 from .rotate_standard_roi_head import RotatedStandardRoIHead
-
+from mmdet.core import bbox2roi
 
 @ROTATED_HEADS.register_module()
 class OrientedStandardRoIHead(RotatedStandardRoIHead):
@@ -21,7 +21,12 @@ class OrientedStandardRoIHead(RotatedStandardRoIHead):
             list[Tensors]: list of region of interest.
         """
         outs = ()
-        rois = rbbox2roi([proposals])
+        # rois = bbox2roi([proposals])  # 水平的
+        rois = rbbox2roi([proposals])  # 将候选区域转换为感兴趣区域
+
+        # 判断是否有边界框回归（bbox regression）的分支，如果有，就调用了一个内部函数_bbox_forward，将图像特征和感兴趣区域作为输入，
+        # 得到两个输出：cls_score和bbox_pred。cls_score是一个张量（tensor），表示每个感兴趣区域属于不同类别的概率1。
+        # bbox_pred是一个张量，表示每个感兴趣区域的边界框预测值1。
         if self.with_bbox:
             bbox_results = self._bbox_forward(x, rois)
             outs = outs + (bbox_results['cls_score'],
@@ -44,12 +49,14 @@ class OrientedStandardRoIHead(RotatedStandardRoIHead):
                 'filename', 'ori_shape', 'pad_shape', and 'img_norm_cfg'.
                 For details on the values of these keys see
                 `mmdet/datasets/pipelines/formatting.py:Collect`.
+            img_metas是一个列表，包含了每张图像的信息，例如图像的形状、缩放因子、翻转等。
             proposals (list[Tensors]): list of region proposals.
             gt_bboxes (list[Tensor]): Ground truth bboxes for each image with
                 shape (num_gts, 5) in [cx, cy, w, h, a] format.
             gt_labels (list[Tensor]): class indices corresponding to each box
             gt_bboxes_ignore (None | list[Tensor]): specify which bounding
                 boxes can be ignored when computing the loss.
+            gt_bboxes_ignore是一个可选参数，用于指定哪些边界框可以在计算损失时被忽略
             gt_masks (None | Tensor) : true segmentation masks for each box
                 used if the architecture supports a segmentation task. Always
                 set to None.
@@ -58,6 +65,7 @@ class OrientedStandardRoIHead(RotatedStandardRoIHead):
             dict[str, Tensor]: a dictionary of loss components
         """
         # assign gts and sample proposals
+        # 判断是否有边界框回归（bbox regression）的分支
         if self.with_bbox:
 
             num_imgs = len(img_metas)
@@ -65,9 +73,11 @@ class OrientedStandardRoIHead(RotatedStandardRoIHead):
                 gt_bboxes_ignore = [None for _ in range(num_imgs)]
             sampling_results = []
             for i in range(num_imgs):
+                # 对每张图像，使用边界框分配器（bbox assigner）将候选区域分配给真实边界框，并给出正负样本和标签。
                 assign_result = self.bbox_assigner.assign(
                     proposal_list[i], gt_bboxes[i], gt_bboxes_ignore[i],
                     gt_labels[i])
+                # 对每张图像，使用边界框采样器（bbox sampler）从分配结果中采样一定数量的正负样本，并给出对应的特征和真实边界框。
                 sampling_result = self.bbox_sampler.sample(
                     assign_result,
                     proposal_list[i],
@@ -75,6 +85,7 @@ class OrientedStandardRoIHead(RotatedStandardRoIHead):
                     gt_labels[i],
                     feats=[lvl_feat[i][None] for lvl_feat in x])
 
+                # 如果某张图像没有真实边界框，则将其正样本真实边界框设置为全零张量。
                 if gt_bboxes[i].numel() == 0:
                     sampling_result.pos_gt_bboxes = gt_bboxes[i].new(
                         (0, gt_bboxes[0].size(-1))).zero_()
@@ -82,10 +93,13 @@ class OrientedStandardRoIHead(RotatedStandardRoIHead):
                     sampling_result.pos_gt_bboxes = \
                         gt_bboxes[i][sampling_result.pos_assigned_gt_inds, :]
 
+                # 将采样结果存入一个列表中
                 sampling_results.append(sampling_result)
 
         losses = dict()
         # bbox head forward and loss
+        # 将图像特征和采样结果作为输入，得到两个输出：cls_score和bbox_pred。cls_score是一个张量（tensor），表示每个感兴趣区域属于不同类别的概率1。bbox_pred是一个张量，表示每个感兴趣区域的边界框预测值1。
+        # 将两个输出作为损失组件存入一个字典中，并返回该字典。
         if self.with_bbox:
             bbox_results = self._bbox_forward_train(x, sampling_results,
                                                     gt_bboxes, gt_labels,
@@ -114,6 +128,9 @@ class OrientedStandardRoIHead(RotatedStandardRoIHead):
         rois = rbbox2roi([res.bboxes for res in sampling_results])
         bbox_results = self._bbox_forward(x, rois)
 
+        # 调用了bbox_head模块的get_targets和loss方法，分别计算目标和损失。
+        # get_targets方法根据采样结果、真实边界框和真实标签生成训练目标，包括正负样本标签、边界框回归目标和权重1。
+        # loss方法根据预测值、感兴趣区域和训练目标计算分类损失和回归损失1。
         bbox_targets = self.bbox_head.get_targets(sampling_results, gt_bboxes,
                                                   gt_labels, self.train_cfg)
         loss_bbox = self.bbox_head.loss(bbox_results['cls_score'],

@@ -4,7 +4,7 @@
     "data/DOTA/val/images/"
   ],
   "ann_dirs": [
-    "data/DOTA/val/labelTxt/"
+    "data/DOTA/val/labelTxt-v1.0/"
   ],
   "sizes": [
     1024

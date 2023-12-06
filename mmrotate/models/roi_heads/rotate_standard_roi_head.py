@@ -166,10 +166,15 @@ class RotatedStandardRoIHead(BaseModule, metaclass=ABCMeta):
         Returns:
             dict[str, Tensor]: a dictionary of bbox_results.
         """
+        # bbox_roi_extractor，将图像特征和感兴趣区域作为输入，得到一个输出：bbox_feats。
+        # bbox_feats是一个张量（tensor），表示每个感兴趣区域对应的特征向量。
         bbox_feats = self.bbox_roi_extractor(
             x[:self.bbox_roi_extractor.num_inputs], rois)
+        # 判断是否有共享头（shared head）的分支，如果有，就调用了一个模块：shared_head
+        # 将bbox_feats作为输入，得到一个输出：bbox_feats。
         if self.with_shared_head:
             bbox_feats = self.shared_head(bbox_feats)
+        # 调用了一个模块：bbox_head，将bbox_feats作为输入，得到两个输出：cls_score和bbox_pred。
         cls_score, bbox_pred = self.bbox_head(bbox_feats)
 
         bbox_results = dict(

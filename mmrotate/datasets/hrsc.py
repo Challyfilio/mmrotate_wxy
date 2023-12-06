@@ -27,7 +27,7 @@ class HRSCDataset(CustomDataset):
     """
 
     CLASSES = None
-    HRSC_CLASS = ('ship', )
+    HRSC_CLASS = ('ship',)
     HRSC_CLASSES = ('ship', 'aircraft carrier', 'warcraft', 'merchant ship',
                     'Nimitz', 'Enterprise', 'Arleigh Burke', 'WhidbeyIsland',
                     'Perry', 'Sanantonio', 'Ticonderoga', 'Kitty Hawk',
@@ -95,8 +95,10 @@ class HRSCDataset(CustomDataset):
 
             filename = osp.join(self.img_subdir, f'{img_id}.bmp')
             data_info['filename'] = f'{img_id}.bmp'
-            xml_path = osp.join(self.img_prefix, self.ann_subdir,
+            xml_path = osp.join(self.ann_subdir,
                                 f'{img_id}.xml')
+            # xml_path = osp.join(self.img_prefix, self.ann_subdir,
+            #                     f'{img_id}.xml')
             tree = ET.parse(xml_path)
             root = tree.getroot()
 
@@ -136,7 +138,7 @@ class HRSCDataset(CustomDataset):
                     float(obj.find('mbox_h').text),
                     float(obj.find('mbox_ang').text), 0
                 ]],
-                                dtype=np.float32)
+                    dtype=np.float32)
 
                 polygon = obb2poly_np(bbox, 'le90')[0, :-1].astype(np.float32)
                 if self.version != 'le90':
@@ -148,7 +150,7 @@ class HRSCDataset(CustomDataset):
                     int(obj.find('header_x').text),
                     int(obj.find('header_y').text)
                 ],
-                                dtype=np.int64)
+                    dtype=np.int64)
 
                 gt_bboxes.append(bbox)
                 gt_labels.append(label)
@@ -209,9 +211,10 @@ class HRSCDataset(CustomDataset):
             metric='mAP',
             logger=None,
             proposal_nums=(100, 300, 1000),
-            iou_thr=[0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95],
+            # iou_thr=[0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95],
+            iou_thr=[0.5],
             scale_ranges=None,
-            use_07_metric=True,
+            use_07_metric=False,  # 07/12
             nproc=4):
         """Evaluate the dataset.
 

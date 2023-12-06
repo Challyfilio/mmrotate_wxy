@@ -29,23 +29,23 @@ class DOTADataset(CustomDataset):
         version (str, optional): Angle representations. Defaults to 'oc'.
         difficulty (bool, optional): The difficulty threshold of GT.
     """
-    # CLASSES = ('plane', 'baseball-diamond', 'bridge', 'ground-track-field',
-    #            'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
-    #            'basketball-court', 'storage-tank', 'soccer-ball-field',
-    #            'roundabout', 'harbor', 'swimming-pool', 'helicopter')
+    CLASSES = ('plane', 'baseball-diamond', 'bridge', 'ground-track-field',
+               'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
+               'basketball-court', 'storage-tank', 'soccer-ball-field',
+               'roundabout', 'harbor', 'swimming-pool', 'helicopter')
 
     # CLASSES = (
     # 'S1', 'P1', 'T4', 'P3', 'B2', 'T3', 'P2', 'D1', 'C1', 'W1', 'H1', 'F1', 'S2', 'T2', 'S4', 'C3', 'A4', 'C2', 'B1',
     # 'M4', 'T1', 'S3', 'M1', 'E1', 'T5', 'M3', 'L2', 'T6', 'M2', 'A2', 'E2', 'R2', 'A3', 'R3', 'A1', 'E3', 'R1', 'A5',
     # 'L1')
 
-    CLASSES = (
-    'F5', 'P7', 'F2', 'W1', 'S4', 'T1', 'C14', 'B3', 'A7', 'A8', 'C2', 'P3', 'F8', 'C8', 'W2', 'S7', 'C13', 'T7', 'L3',
-    'Y1', 'M2', 'S5', 'V1', 'T2', 'S6', 'C10', 'S1', 'R2', 'D2', 'V2', 'C9', 'P2', 'H1', 'U2', 'H3', 'N1', 'T5', 'A9',
-    'D1', 'C6', 'C5', 'T8', 'P5', 'K2', 'P4', 'H2', 'A3', 'B1', 'E2', 'K3', 'C12', 'C15', 'L4', 'S2', 'R1', 'W3', 'T9',
-    'C11', 'M5', 'E4', 'R3', 'F7', 'U1', 'C3', 'K1', 'M1', 'A6', 'F3', 'E3', 'C1', 'B2', 'T6', 'P1', 'K5', 'K4', 'A4',
-    'L2', 'C16', 'S3', 'C4', 'A5', 'I1', 'A1', 'E1', 'P6', 'F6', 'C7', 'M4', 'F1', 'T10', 'T3', 'L1', 'Z1', 'A2', 'T4',
-    'M3', 'R4', 'T11')
+    # CLASSES = (
+    # 'F5', 'P7', 'F2', 'W1', 'S4', 'T1', 'C14', 'B3', 'A7', 'A8', 'C2', 'P3', 'F8', 'C8', 'W2', 'S7', 'C13', 'T7', 'L3',
+    # 'Y1', 'M2', 'S5', 'V1', 'T2', 'S6', 'C10', 'S1', 'R2', 'D2', 'V2', 'C9', 'P2', 'H1', 'U2', 'H3', 'N1', 'T5', 'A9',
+    # 'D1', 'C6', 'C5', 'T8', 'P5', 'K2', 'P4', 'H2', 'A3', 'B1', 'E2', 'K3', 'C12', 'C15', 'L4', 'S2', 'R1', 'W3', 'T9',
+    # 'C11', 'M5', 'E4', 'R3', 'F7', 'U1', 'C3', 'K1', 'M1', 'A6', 'F3', 'E3', 'C1', 'B2', 'T6', 'P1', 'K5', 'K4', 'A4',
+    # 'L2', 'C16', 'S3', 'C4', 'A5', 'I1', 'A1', 'E1', 'P6', 'F6', 'C7', 'M4', 'F1', 'T10', 'T3', 'L1', 'Z1', 'A2', 'T4',
+    # 'M3', 'R4', 'T11')
 
     PALETTE = [(165, 42, 42), (189, 183, 107), (0, 255, 0), (255, 0, 0),
                (138, 43, 226), (255, 128, 0), (255, 0, 255), (0, 255, 255),

@@ -66,6 +66,7 @@ class RotatedSingleRoIExtractor(BaseRoIExtractor):
         return roi_layers
 
     def map_roi_levels(self, rois, num_levels):
+        # 根据尺度将感兴趣区域映射到相应的特征层
         """Map rois to corresponding feature levels by scales.
 
         - scale < finest_scale * 2: level 0
@@ -82,8 +83,11 @@ class RotatedSingleRoIExtractor(BaseRoIExtractor):
         """
         # scale = torch.sqrt(
         #     (rois[:, 3] - rois[:, 1]) * (rois[:, 4] - rois[:, 2]))
+        # 计算每个感兴趣区域的尺度，即宽度和高度的平方根
         scale = torch.sqrt(rois[:, 3] * rois[:, 4])
+        # 根据尺度和最小尺度（self.finest_scale）计算每个感兴趣区域对应的层级（target_lvls）
         target_lvls = torch.floor(torch.log2(scale / self.finest_scale + 1e-6))
+        # 将层级限制在0到num_levels - 1之间，并转换为长整型，然后返回层级张量，形状为(k, )
         target_lvls = target_lvls.clamp(min=0, max=num_levels - 1).long()
         return target_lvls
 

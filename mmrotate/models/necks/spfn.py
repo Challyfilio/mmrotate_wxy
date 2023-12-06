@@ -1,4 +1,4 @@
-# Copyright (c) Challyfilio. All rights reserved.
+# Copyright (c) 2023 ✨Challyfilio✨
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
@@ -15,6 +15,7 @@ from loguru import logger
 
 from ..builder import ROTATED_NECKS
 
+
 # from inplace_abn import InPlaceABN, InPlaceABNSync
 # from model.sync_batchnorm import SynchronizedBatchNorm2d
 
@@ -23,24 +24,24 @@ from ..builder import ROTATED_NECKS
 
 
 class conv_block(nn.Module):
-    def __init__(self, 
-                 in_channels, 
-                 out_channels, 
-                 kernel_size, 
-                 stride, 
-                 padding, 
-                 dilation=(1, 1), 
-                 group=1, 
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size,
+                 stride,
+                 padding,
+                 dilation=(1, 1),
+                 group=1,
                  bn_act=False,
                  bias=False):
         super(conv_block, self).__init__()
-        self.conv = nn.Conv2d(in_channels, 
-                              out_channels, 
-                              kernel_size=kernel_size, 
+        self.conv = nn.Conv2d(in_channels,
+                              out_channels,
+                              kernel_size=kernel_size,
                               stride=stride,
-                              padding=padding, 
-                              dilation=dilation, 
-                              groups=group, 
+                              padding=padding,
+                              dilation=dilation,
+                              groups=group,
                               bias=bias)
         self.bn = nn.BatchNorm2d(out_channels)
         self.act = nn.PReLU(out_channels)
@@ -56,20 +57,20 @@ class conv_block(nn.Module):
 @ROTATED_NECKS.register_module()
 class SFPN(nn.Module):
     def __init__(
-        self,
-        in_channels: List[int],
-        out_channels: int,
-        num_outs: int,
-        add_extra_convs: Union[bool, str] = False,
+            self,
+            in_channels: List[int],
+            out_channels: int,
+            num_outs: int,
+            add_extra_convs: Union[bool, str] = False,
     ) -> None:
-        super(SFPN,self).__init__()
+        super(SFPN, self).__init__()
         assert isinstance(in_channels, list)
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.num_ins = len(in_channels)
         self.num_outs = num_outs
         self.add_extra_convs = add_extra_convs
-        
+
         assert isinstance(add_extra_convs, (str, bool))
         if isinstance(add_extra_convs, str):
             # Extra_convs_source choices: 'on_input', 'on_lateral', 'on_output'
@@ -77,46 +78,46 @@ class SFPN(nn.Module):
         elif add_extra_convs:  # True
             self.add_extra_convs = 'on_input'
 
-        self.spfm = SPFM(self.in_channels[3], 2 * self.in_channels[3], 4) # 最后一层特征图channl
-      
+        self.spfm = SPFM(self.in_channels[3], 2 * self.in_channels[3], 4)  # 最后一层特征图channl
+
         self.egca1 = EGCA(self.in_channels[0])
         self.egca2 = EGCA(self.in_channels[1])
         self.egca3 = EGCA(self.in_channels[2])
         self.egca4 = EGCA(self.in_channels[3])
-        
+
         self.adjust2 = Adjustment(self.in_channels[0], self.out_channels)
         self.adjust3 = Adjustment(self.in_channels[1], self.out_channels)
         self.adjust4 = Adjustment(self.in_channels[2], self.out_channels)
         self.adjust5 = Adjustment(self.in_channels[3], self.out_channels)
-        
+
         # Decoder-based subpixel convolution
         self.dsc5 = DSCModule(self.in_channels[3], self.in_channels[2])
         self.dsc4 = DSCModule(self.in_channels[2], self.in_channels[1])
         self.dsc3 = DSCModule(self.in_channels[1], self.in_channels[0])
-        self.dsc2 = DSCModule(self.in_channels[0], int(self.in_channels[0]/2))
+        self.dsc2 = DSCModule(self.in_channels[0], int(self.in_channels[0] / 2))
 
     def forward(self, inputs: Tuple[Tensor]) -> tuple:
-        x2,x3,x4,x5 = inputs
+        x2, x3, x4, x5 = inputs
 
-        Spfm = self.spfm(x5) # [2,4096,64,64]
+        Spfm = self.spfm(x5)  # [2,4096,64,64]
 
-        dsc5 = self.dsc5(x5,Spfm) # [2,2048,32,32]
-        dsc4 = self.dsc4(x4,dsc5) # [2,1024,64,64]
-        dsc3 = self.dsc3(x3,dsc4) # [2,512,128,128]
-        dsc2 = self.dsc2(x2,dsc3) # [2,256,256,256]
-        
+        dsc5 = self.dsc5(x5, Spfm)  # [2,2048,32,32]
+        dsc4 = self.dsc4(x4, dsc5)  # [2,1024,64,64]
+        dsc3 = self.dsc3(x3, dsc4)  # [2,512,128,128]
+        dsc2 = self.dsc2(x2, dsc3)  # [2,256,256,256]
+
         # Efficient global context aggregation
-        gui2 = self.egca1(x2) # [2,256,256,256]
-        gui3 = self.egca2(x3) # [2,512,128,128]
-        gui4 = self.egca3(x4) # [2,1024,64,64]
-        gui5 = self.egca4(x5) # [2,2048,32,32]
+        gui2 = self.egca1(x2)  # [2,256,256,256]
+        gui3 = self.egca2(x3)  # [2,512,128,128]
+        gui4 = self.egca3(x4)  # [2,1024,64,64]
+        gui5 = self.egca4(x5)  # [2,2048,32,32]
 
-        adj2 = self.adjust2(gui2+dsc2) # [2,256,256,256]
-        adj3 = self.adjust3(gui3+dsc3) # [2,256,128,128]
-        adj4 = self.adjust4(gui4+dsc4) # [2,256,64,64]
-        adj5 = self.adjust5(gui5+dsc5) # [2,256,32,32]
+        adj2 = self.adjust2(gui2 + dsc2)  # [2,256,256,256]
+        adj3 = self.adjust3(gui3 + dsc3)  # [2,256,128,128]
+        adj4 = self.adjust4(gui4 + dsc4)  # [2,256,64,64]
+        adj5 = self.adjust5(gui5 + dsc5)  # [2,256,32,32]
 
-        outs=[]
+        outs = []
         outs.append(adj2)
         outs.append(adj3)
         outs.append(adj4)
@@ -137,12 +138,12 @@ class RPPModule(nn.Module):
         super(RPPModule, self).__init__()
         self.groups = groups
         self.conv_dws1 = nn.Sequential(
-            conv_block(in_channels, 4*in_channels, kernel_size=3, stride=1, padding=4,
-                                    group=1, dilation=4, bn_act=True),
+            conv_block(in_channels, 4 * in_channels, kernel_size=3, stride=1, padding=4,
+                       group=1, dilation=4, bn_act=True),
             nn.PixelShuffle(upscale_factor=2))
         self.conv_dws2 = nn.Sequential(
-            conv_block(in_channels, 4*in_channels, kernel_size=3, stride=1, padding=8,
-                                    group=1, dilation=8, bn_act=True),
+            conv_block(in_channels, 4 * in_channels, kernel_size=3, stride=1, padding=8,
+                       group=1, dilation=8, bn_act=True),
             nn.PixelShuffle(upscale_factor=2))
 
         self.fusion = nn.Sequential(
@@ -154,9 +155,9 @@ class RPPModule(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         br1 = self.conv_dws1(x)
-        b2 = self.conv_dws1(x)
+        br2 = self.conv_dws2(x)  # 2023.08.11
 
-        out = torch.cat((br1, b2), dim=1)
+        out = torch.cat((br1, br2), dim=1)
         out = self.fusion(out)
 
         br3 = self.conv_dws3(F.adaptive_avg_pool2d(x, (1, 1)))
@@ -166,7 +167,7 @@ class RPPModule(nn.Module):
 
 class SPFM(nn.Module):
     def __init__(self, in_channels, out_channels, num_splits):
-        super(SPFM,self).__init__()
+        super(SPFM, self).__init__()
 
         assert in_channels % num_splits == 0
 
@@ -220,7 +221,7 @@ class EGCA(nn.Module):
 
         self.branch3 = nn.Sequential(
             conv_block(in_channels, in_channels, kernel_size=3, stride=1, padding=1, group=in_channels, bn_act=True),
-            conv_block(in_channels, in_channels, kernel_size=1, stride=1, padding=0, group=1, bn_act=True)) 
+            conv_block(in_channels, in_channels, kernel_size=1, stride=1, padding=0, group=1, bn_act=True))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x0, x1 = x.chunk(2, dim=1)
@@ -250,8 +251,8 @@ class EGCA(nn.Module):
 
 
 class DSCModule(nn.Module):
-    def __init__(self, 
-                 in_channels, 
+    def __init__(self,
+                 in_channels,
                  out_channels):
         super(DSCModule, self).__init__()
         self.conv1 = conv_block(in_channels, in_channels, kernel_size=1, stride=1, padding=0, bn_act=True)
@@ -267,7 +268,7 @@ class DSCModule(nn.Module):
 
         y_high = nn.Upsample(size=(h, w), mode='bilinear', align_corners=True)(y_high)
         x_gui = self.conv1(x_gui)
-        y_high = self.conv4(y_high) # 1*1
+        y_high = self.conv4(y_high)  # 1*1
         y_high = self.conv2(y_high)
 
         out = torch.cat([y_high, x_gui], 1)
@@ -290,10 +291,10 @@ if __name__ == "__main__":
     input_tensor3 = torch.rand(2, 512, 128, 128)
     input_tensor4 = torch.rand(2, 1024, 64, 64)
     input_tensor5 = torch.rand(2, 2048, 32, 32)
-    channels50 = [256, 512, 1024, 2048] #rn50
-    channels34 = [64, 128, 256, 512] #rn34
-    model = SFPN(in_channels=channels50,out_channels=256,num_outs=4)
-    outputs = model((input_tensor2,input_tensor3,input_tensor4,input_tensor5))
+    channels50 = [256, 512, 1024, 2048]  # rn50
+    channels34 = [64, 128, 256, 512]  # rn34
+    model = SFPN(in_channels=channels50, out_channels=256, num_outs=4)
+    outputs = model((input_tensor2, input_tensor3, input_tensor4, input_tensor5))
     logger.success(len(outputs))
     for j in outputs:
         print(j.shape)

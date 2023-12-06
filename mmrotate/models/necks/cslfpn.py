@@ -1,4 +1,4 @@
-# Copyright (c) Challyfilio. All rights reserved.
+# Copyright (c) 2023 ✨Challyfilio✨
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
@@ -179,7 +179,7 @@ class BIFusion(nn.Module):  # SFM
     def __init__(self, out_channels, mid_shape, name="bufusion"):
         super(BIFusion, self).__init__()
         self._out_channels = out_channels
-        self._mid_shape = (mid_shape, mid_shape) # (,)
+        self._mid_shape = (mid_shape, mid_shape)  # (,)
         self._name = name
 
         # def _Build(self,mid_shape):
@@ -336,6 +336,18 @@ class SFBs(nn.Module):
         return out_ts_list
 
 
+class InputAdjSize(nn.Module):
+    def __init__(self, target_shape, name="inputadjsize"):
+        super(InputAdjSize, self).__init__()
+        self._target_shape = target_shape
+        self._name = name
+        self._adj = nn.Upsample(size=(self._target_shape, self._target_shape), mode='bilinear', align_corners=True)
+
+    def forward(self, adj):
+        adj_out = self._adj(adj)
+        return adj_out
+
+
 @ROTATED_NECKS.register_module()
 class CSLFPN(nn.Module):
     def __init__(
@@ -355,7 +367,7 @@ class CSLFPN(nn.Module):
         self.num_outs = num_outs
         self.num_ins = len(in_channels)
         self.add_extra_convs = add_extra_convs
-        
+
         assert isinstance(add_extra_convs, (str, bool))
         if isinstance(add_extra_convs, str):
             # Extra_convs_source choices: 'on_input', 'on_lateral', 'on_output'
@@ -379,8 +391,20 @@ class CSLFPN(nn.Module):
                          mid_shape_list_1=self.mid_shape_list_1,
                          mid_shape_list_2=self.feature_map_shape)
 
+        self._adjsize_list = nn.ModuleList()
+        for i in self.feature_map_shape:
+            self._adjsize_list.append(InputAdjSize(target_shape=i))
+        # self._top_up = nn.Upsample(size=(self._target_shape, self._target_shape), mode='bilinear', align_corners=True)
+
     def forward(self, inputs: Tuple[Tensor]) -> tuple:
-        x2, x3, x4, x5 = inputs
+        # x2, x3, x4, x5 = inputs
+
+        outs = list(inputs)
+        for i in range(len(outs)):
+            outs[i] = self._adjsize_list[i](outs[i])
+            # outs[i] = F.interpolate(outs[i], size=self.feature_map_shape[i], mode='bilinear', align_corners=True)
+        x2, x3, x4, x5 = outs
+
         l1 = self.adjust2(x2)
         l2 = self.adjust3(x3)
         l3 = self.adjust4(x4)
@@ -405,14 +429,14 @@ if __name__ == "__main__":
     input_tensor3 = torch.rand(2, 192, 128, 128)
     input_tensor4 = torch.rand(2, 384, 64, 64)
     input_tensor5 = torch.rand(2, 768, 32, 32)
-    channels50 = [256, 512, 1024, 2048] #rn50
-    channels34 = [64, 128, 256, 512] #rn34
+    channels50 = [256, 512, 1024, 2048]  # rn50
+    channels34 = [64, 128, 256, 512]  # rn34
     channels_s = [96, 192, 384, 768]
-    model = CSLFPN(feature_map_shape=[256,128,64,32],
+    model = CSLFPN(feature_map_shape=[256, 128, 64, 32],
                    in_channels=channels_s,
                    out_channels=256,
                    num_outs=4)
-    outputs = model((input_tensor2,input_tensor3,input_tensor4,input_tensor5))
+    outputs = model((input_tensor2, input_tensor3, input_tensor4, input_tensor5))
     logger.success(len(outputs))
     for j in outputs:
         print(j.shape)

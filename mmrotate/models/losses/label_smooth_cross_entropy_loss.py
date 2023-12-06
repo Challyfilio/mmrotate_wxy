@@ -1,16 +1,17 @@
-# Copyright (c) Challyfilio. All rights reserved.
+# Copyright (c) 2023 ✨Challyfilio✨. All rights reserved.
 import torch.nn as nn
 import torch.nn.functional as F
 
 from ..builder import ROTATED_LOSSES
 from loguru import logger
 
-def linear_combination(x, y, epsilon):  
-    return epsilon*x + (1-epsilon)*y
+
+def linear_combination(x, y, epsilon):
+    return epsilon * x + (1 - epsilon) * y
 
 
-def reduce_loss(loss, reduction='mean'): 
-    return loss.mean() if reduction=='mean' else loss.sum() if reduction=='sum' else loss
+def reduce_loss(loss, reduction='mean'):
+    return loss.mean() if reduction == 'mean' else loss.sum() if reduction == 'sum' else loss
 
 
 @ROTATED_LOSSES.register_module()
@@ -24,16 +25,16 @@ class LabelSmoothCrossEntropyLoss(nn.Module):
     Returns:
         loss (torch.Tensor)
     """
-    def __init__(self, 
+
+    def __init__(self,
                  avg_factor=None,
                  reduction_override=None,
-                 epsilon=0.1, 
-                 reduction='mean'): 
+                 epsilon=0.1,
+                 reduction='mean'):
         super(LabelSmoothCrossEntropyLoss, self).__init__()
         self.epsilon = epsilon
         self.reduction = reduction
         # self.avg_factor = avg_factor
-
 
     def forward(self,
                 preds,
@@ -55,5 +56,5 @@ class LabelSmoothCrossEntropyLoss(nn.Module):
         log_preds = F.log_softmax(preds, dim=-1)
         loss = reduce_loss(-log_preds.sum(dim=-1), self.reduction)
         nll = F.nll_loss(log_preds, target, reduction=self.reduction)
-        loss_cls = linear_combination(loss/n, nll, self.epsilon)
+        loss_cls = linear_combination(loss / n, nll, self.epsilon)
         return loss_cls
