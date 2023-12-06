@@ -1,5 +1,5 @@
 _base_ = [
-    '../_base_/datasets/dota2023.py', '../_base_/schedules/schedule_1x.py',
+    '../_base_/datasets/dotav1.py', '../_base_/schedules/schedule_1x.py',
     '../_base_/default_runtime.py'
 ]
 
@@ -35,14 +35,8 @@ model = dict(
             type='DeltaXYWHBBoxCoder',
             target_means=[.0, .0, .0, .0],
             target_stds=[1.0, 1.0, 1.0, 1.0]),
-        # loss_cls=dict(
-        #     type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
         loss_cls=dict(
-            type='FocalLoss',
-            use_sigmoid=True,
-            gamma=2.0,
-            alpha=0.25,
-            loss_weight=1.0),
+            type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
         loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0)),
     roi_head=dict(
         type='RoITransRoIHead',
@@ -72,7 +66,7 @@ model = dict(
                 in_channels=256,
                 fc_out_channels=1024,
                 roi_feat_size=7,
-                num_classes=98,
+                num_classes=15,
                 bbox_coder=dict(
                     type='DeltaXYWHAHBBoxCoder',
                     angle_range=angle_version,
@@ -81,15 +75,9 @@ model = dict(
                     target_means=[0., 0., 0., 0., 0.],
                     target_stds=[0.1, 0.1, 0.2, 0.2, 1]),
                 reg_class_agnostic=True,
-                # loss_cls=dict(
-                #     type='CrossEntropyLoss',
-                #     use_sigmoid=False,
-                #     loss_weight=1.0),
                 loss_cls=dict(
-                    type='FocalLoss',
-                    use_sigmoid=True,
-                    gamma=2.0,
-                    alpha=0.25,
+                    type='CrossEntropyLoss',
+                    use_sigmoid=False,
                     loss_weight=1.0),
                 loss_bbox=dict(type='SmoothL1Loss', beta=1.0,
                                loss_weight=1.0)),
@@ -98,7 +86,7 @@ model = dict(
                 in_channels=256,
                 fc_out_channels=1024,
                 roi_feat_size=7,
-                num_classes=98,
+                num_classes=15,
                 bbox_coder=dict(
                     type='DeltaXYWHAOBBoxCoder',
                     angle_range=angle_version,
@@ -108,15 +96,9 @@ model = dict(
                     target_means=[0., 0., 0., 0., 0.],
                     target_stds=[0.05, 0.05, 0.1, 0.1, 0.5]),
                 reg_class_agnostic=False,
-                # loss_cls=dict(
-                #     type='CrossEntropyLoss',
-                #     use_sigmoid=False,
-                #     loss_weight=1.0),
                 loss_cls=dict(
-                    type='FocalLoss',
-                    use_sigmoid=True,
-                    gamma=2.0,
-                    alpha=0.25,
+                    type='CrossEntropyLoss',
+                    use_sigmoid=False,
                     loss_weight=1.0),
                 loss_bbox=dict(type='SmoothL1Loss', beta=1.0, loss_weight=1.0))
         ]),
@@ -142,7 +124,7 @@ model = dict(
         rpn_proposal=dict(
             nms_pre=2000,
             max_per_img=2000,
-            nms=dict(type='nms', iou_threshold=0.7),  # 0.7
+            nms=dict(type='nms', iou_threshold=0.7),
             min_bbox_size=0),
         rcnn=[
             dict(
@@ -184,7 +166,7 @@ model = dict(
         rpn=dict(
             nms_pre=2000,
             max_per_img=2000,
-            nms=dict(type='nms', iou_threshold=0.7),  # 0.7
+            nms=dict(type='nms', iou_threshold=0.7),
             min_bbox_size=0),
         rcnn=dict(
             nms_pre=2000,

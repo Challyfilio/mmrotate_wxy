@@ -1,6 +1,7 @@
 _base_ = ['./oriented_rcnn_r50_fpn_1x_dota_le90.py']
 
 pretrained = 'https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_tiny_patch4_window7_224.pth'  # noqa
+# pretrained = '/workspace/pycharm_project/mmpretrain/work_dir/simmim_swin_base/epoch_100.pth'
 
 model = dict(
     backbone=dict(
@@ -21,16 +22,9 @@ model = dict(
         with_cp=False,
         convert_weights=True,
         init_cfg=dict(type='Pretrained', checkpoint=pretrained)),
-    # neck=dict(
-    #     _delete_=True,
-    #     type='FPN',
-    #     in_channels=[96, 192, 384, 768],
-    #     out_channels=256,
-    #     num_outs=5))
     neck=dict(
         _delete_=True,
-        type='CSLFPN',
-        feature_map_shape=[256, 128, 64, 32],
+        type='FPN',
         in_channels=[96, 192, 384, 768],
         out_channels=256,
         num_outs=5))

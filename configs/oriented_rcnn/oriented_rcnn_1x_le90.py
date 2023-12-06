@@ -1,23 +1,36 @@
+# Copyright (c) 2023 ✨Challyfilio✨
 _base_ = [
-    '../_base_/datasets/dota2023.py', '../_base_/schedules/schedule_1x.py',
+    # '../_base_/datasets/hrsc.py',  ###
+    # '../_base_/datasets/fairv1.py',
+    '../_base_/datasets/dotav1.py',
+    '../_base_/schedules/schedule_1x.py',  ###
     '../_base_/default_runtime.py'
 ]
 
 angle_version = 'le90'
+gpu_number = 1
 model = dict(
     type='OrientedRCNN',
     backbone=dict(
-        type='ResNet',
-        depth=50,
+        type='ResNetDC',
+        depth=101,  ###
         num_stages=4,
         out_indices=(0, 1, 2, 3),
         frozen_stages=1,
         norm_cfg=dict(type='BN', requires_grad=True),
         norm_eval=True,
         style='pytorch',
-        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
+        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet101'),  ###
+        dcn=dict(type='DCN', deformable_groups=1, fallback_on_stride=False),
+        stage_with_dcn=(False, True, True, True)
+    ),
+    # neck=dict(
+    #     type='FPN',
+    #     in_channels=[256, 512, 1024, 2048],
+    #     out_channels=256,
+    #     num_outs=5),
     neck=dict(
-        type='FPN',
+        type='PAFPNV1',
         in_channels=[256, 512, 1024, 2048],
         out_channels=256,
         num_outs=5),
@@ -56,7 +69,7 @@ model = dict(
             in_channels=256,
             fc_out_channels=1024,
             roi_feat_size=7,
-            num_classes=98,
+            num_classes=15,  # 37###
             bbox_coder=dict(
                 type='DeltaXYWHAOBBoxCoder',
                 angle_range=angle_version,
@@ -68,6 +81,11 @@ model = dict(
             reg_class_agnostic=True,
             loss_cls=dict(
                 type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+            # loss_cls=dict(
+            #     type='LabelSmoothFocalLoss',
+            #     alpha=0.25,
+            #     gamma=2,
+            #     epsilon=0.1),
             loss_bbox=dict(type='SmoothL1Loss', beta=1.0, loss_weight=1.0))),
     train_cfg=dict(
         rpn=dict(
@@ -124,6 +142,7 @@ model = dict(
 
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
+
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
@@ -133,14 +152,31 @@ train_pipeline = [
         flip_ratio=[0.25, 0.25, 0.25],
         direction=['horizontal', 'vertical', 'diagonal'],
         version=angle_version),
+    dict(
+        type='PolyRandomRotate',
+        rotate_ratio=0.5,
+        angles_range=180,
+        auto_bound=False,
+        rect_classes=[9, 11],
+        version=angle_version),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle'),
     dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
 ]
+
 data = dict(
+    samples_per_gpu=2,
+    workers_per_gpu=2,
     train=dict(pipeline=train_pipeline, version=angle_version),
     val=dict(version=angle_version),
     test=dict(version=angle_version))
 
 optimizer = dict(lr=0.005)
+
+# optimizer = dict(
+#     _delete_=True,
+#     type='AdamW',
+#     lr=0.0002, #/8*gpu_number,
+#     betas=(0.9, 0.999),
+#     weight_decay=0.05)
