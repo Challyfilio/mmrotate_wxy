@@ -1,9 +1,11 @@
+# Copyright (c) 2023 ✨Challyfilio✨
+# 处理比赛补充数据集标签 csv --> txt
 import os
 import csv
 
 if __name__ == '__main__':
-    label_root = '/workspace/pycharm_project/mmrotate/data/2023/extra/labels/'
-    csv_path = '/workspace/pycharm_project/mmrotate/data/2023/extra/train_labels_final.csv'
+    label_root = '/workspace/pycharm_project/Dataset/extra/annfiles/'
+    csv_path = '/workspace/pycharm_project/Dataset/extra/train_labels_final.csv'
     count = 0
     with open(csv_path, encoding='utf-8-sig') as f:
         for row in csv.reader(f, skipinitialspace=True):  # 读行

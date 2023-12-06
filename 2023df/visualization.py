@@ -1,3 +1,5 @@
+# Copyright (c) 2023 ✨Challyfilio✨
+# 翻转图像、可视化
 import os
 import csv
 import cv2
@@ -8,55 +10,60 @@ from tqdm import tqdm
 
 from convert_res import get_file_basename
 
-image_root = '/workspace/pycharm_project/mmrotate/data/2023/train/images/'
-label_root = '/workspace/pycharm_project/mmrotate/data/2023/train/new_labels/'
+# data_root = '/workspace/pycharm_project/mmrotate/wxytests/data/'
+# image_root = '/workspace/pycharm_project/Dataset/train_overlap/images/'
+# label_root = '#'
 
-# image_root = '/workspace/pycharm_project/mmrotate/data/2023/extra/images/'
-# label_root = '/workspace/pycharm_project/mmrotate/data/2023/extra/labels/'
+data_root = '/workspace/pycharm_project/Dataset/extra_original/'
+image_root = data_root + 'images/'
+label_root = data_root + 'annfiles/'
 
 
+# 翻转图像
 def filp(img_path, label_path, filp_mode):
     if filp_mode == -1 or filp_mode == 0 or filp_mode == 1:
         img = cv2.imread(img_path)
         img = cv2.flip(img, filp_mode)  # -1,0,1
         bsname = get_file_basename(img_path)
         cv2.imwrite(image_root + bsname + '_' + str(filp_mode) + '.tif', img)  # 存图
-
-        with open(label_path, "r", encoding='utf-8') as f:
-            lines = f.readlines()
-            for l in lines:
-                data = []
-                for i in range(0, 8):
-                    position = l.split(' ')[i]
-                    data.append(float(position))
-                data.append(l.split(' ')[-1])
-                if filp_mode == 0:  # v
-                    data[1] = 1024.0 - data[1]
-                    data[3] = 1024.0 - data[3]
-                    data[5] = 1024.0 - data[5]
-                    data[7] = 1024.0 - data[7]
-                elif filp_mode == 1:  # h
-                    data[0] = 1024.0 - data[0]
-                    data[2] = 1024.0 - data[2]
-                    data[4] = 1024.0 - data[4]
-                    data[6] = 1024.0 - data[6]
-                elif filp_mode == -1:  # hv
-                    data[1] = 1024.0 - data[1]
-                    data[3] = 1024.0 - data[3]
-                    data[5] = 1024.0 - data[5]
-                    data[7] = 1024.0 - data[7]
-                    data[0] = 1024.0 - data[0]
-                    data[2] = 1024.0 - data[2]
-                    data[4] = 1024.0 - data[4]
-                    data[6] = 1024.0 - data[6]
-                else:
-                    pass
-                with open(label_root + bsname + '_' + str(filp_mode) + '.txt', "a", encoding='utf-8') as f_out:
-                    out_str = ''
+        if label_path == '#':
+            pass
+        else:
+            with open(label_path, "r", encoding='utf-8') as f:
+                lines = f.readlines()
+                for l in lines:
+                    data = []
                     for i in range(0, 8):
-                        out_str = out_str + str(data[i]) + ' '
-                    out_str = out_str + data[8]
-                    f_out.write(out_str)
+                        position = l.split(' ')[i]
+                        data.append(float(position))
+                    data.append(l.split(' ')[-1])
+                    if filp_mode == 0:  # v
+                        data[1] = 1024.0 - data[1]
+                        data[3] = 1024.0 - data[3]
+                        data[5] = 1024.0 - data[5]
+                        data[7] = 1024.0 - data[7]
+                    elif filp_mode == 1:  # h
+                        data[0] = 1024.0 - data[0]
+                        data[2] = 1024.0 - data[2]
+                        data[4] = 1024.0 - data[4]
+                        data[6] = 1024.0 - data[6]
+                    elif filp_mode == -1:  # hv
+                        data[1] = 1024.0 - data[1]
+                        data[3] = 1024.0 - data[3]
+                        data[5] = 1024.0 - data[5]
+                        data[7] = 1024.0 - data[7]
+                        data[0] = 1024.0 - data[0]
+                        data[2] = 1024.0 - data[2]
+                        data[4] = 1024.0 - data[4]
+                        data[6] = 1024.0 - data[6]
+                    else:
+                        pass
+                    with open(label_root + bsname + '_' + str(filp_mode) + '.txt', "a", encoding='utf-8') as f_out:
+                        out_str = ''
+                        for i in range(0, 8):
+                            out_str = out_str + str(data[i]) + ' '
+                        out_str = out_str + data[8]
+                        f_out.write(out_str)
     else:
         pass
 
@@ -73,6 +80,7 @@ def process_dataset():
         # print(labelPath)
         # print(mode)
         filp(imagePath, labelPath, mode)
+        # filp(imagePath, '#', mode)
     print('finish')
 
 

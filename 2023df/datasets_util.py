@@ -1,3 +1,5 @@
+# Copyright (c) 2023 ✨Challyfilio✨
+# 划分数据集
 import os
 import random
 import shutil
@@ -36,22 +38,22 @@ def cp_labels(lable_root, trainDir, validDir):
 
     for i in tqdm(trainfiles):
         fileName = os.path.join(lable_root, i)
-        fileName = fileName.replace('.tif', '.txt')
-        copy2(fileName, '/workspace/pycharm_project/mmrotate/data/2023/train/labels')
+        fileName = fileName.replace('.png', '.txt')
+        copy2(fileName, '/workspace/pycharm_project/mmrotate/data/fair1m_ss/train/annfiles')
 
     for j in tqdm(valfiles):
         fileName = os.path.join(lable_root, j)
-        fileName = fileName.replace('.tif', '.txt')
-        copy2(fileName, '/workspace/pycharm_project/mmrotate/data/2023/val/labels')
+        fileName = fileName.replace('.png', '.txt')
+        copy2(fileName, '/workspace/pycharm_project/mmrotate/data/fair1m_ss/val/annfiles')
 
 
 def main():
-    data_root = '/workspace/pycharm_project/mmrotate/data/2023/full_train/images/'
-    trainDir = '/workspace/pycharm_project/mmrotate/data/2023/train/images/'
-    validDir = '/workspace/pycharm_project/mmrotate/data/2023/val/images'
+    data_root = '/workspace/pycharm_project/mmrotate/data/fair1m_ss/trainval/images/'
+    trainDir = '/workspace/pycharm_project/mmrotate/data/fair1m_ss/train/images/'
+    validDir = '/workspace/pycharm_project/mmrotate/data/fair1m_ss/val/images/'
     # spilt_datasets(data_root, trainDir, validDir)
 
-    lable_root = '/workspace/pycharm_project/mmrotate/data/2023/full_train/new_labels/'
+    lable_root = '/workspace/pycharm_project/mmrotate/data/fair1m_ss/trainval/annfiles/'
     cp_labels(lable_root, trainDir, validDir)
 
 
