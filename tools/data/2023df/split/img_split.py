@@ -136,13 +136,11 @@ def parse_args():
 
 def get_sliding_window(info, sizes, gaps, img_rate_thr):
     """Get sliding windows.
-
     Args:
         info (dict): Dict of image's width and height.
         sizes (list): List of window's sizes.
         gaps (list): List of window's gaps.
         img_rate_thr (float): Threshold of window area divided by image area.
-
     Returns:
         list[np.array]: Information of valid windows.
     """
@@ -185,10 +183,8 @@ def get_sliding_window(info, sizes, gaps, img_rate_thr):
 
 def poly2hbb(polys):
     """Convert polygons to horizontal bboxes.
-
     Args:
         polys (np.array): Polygons with shape (N, 8)
-
     Returns:
         np.array: Horizontal bboxes.
     """
@@ -201,12 +197,10 @@ def poly2hbb(polys):
 
 def bbox_overlaps_iof(bboxes1, bboxes2, eps=1e-6):
     """Compute bbox overlaps (iof).
-
     Args:
         bboxes1 (np.array): Horizontal bboxes1.
         bboxes2 (np.array): Horizontal bboxes2.
         eps (float, optional): Defaults to 1e-6.
-
     Returns:
         np.array: Overlaps.
     """
@@ -229,8 +223,8 @@ def bbox_overlaps_iof(bboxes1, bboxes2, eps=1e-6):
     if shgeo is None:
         raise ImportError('Please run "pip install shapely" '
                           'to install shapely first.')
-    sg_polys1 = [shgeo.Polygon(p) for p in bboxes1.reshape(rows, -1, 2)]
-    sg_polys2 = [shgeo.Polygon(p) for p in polys2.reshape(cols, -1, 2)]
+    sg_polys1 = [shgeo.Polygon(p).buffer(0.01) for p in bboxes1.reshape(rows, -1, 2)]
+    sg_polys2 = [shgeo.Polygon(p).buffer(0.01) for p in polys2.reshape(cols, -1, 2)]
     overlaps = np.zeros(h_overlaps.shape)
     for p in zip(*np.nonzero(h_overlaps)):
         overlaps[p] = sg_polys1[p[0]].intersection(sg_polys2[p[-1]]).area
@@ -246,12 +240,10 @@ def bbox_overlaps_iof(bboxes1, bboxes2, eps=1e-6):
 
 def get_window_obj(info, windows, iof_thr):
     """
-
     Args:
         info (dict): Dict of bbox annotations.
         windows (np.array): information of sliding windows.
         iof_thr (float): Threshold of overlaps between bbox and window.
-
     Returns:
         list[dict]: List of bbox annotations of every window.
     """
@@ -277,7 +269,6 @@ def get_window_obj(info, windows, iof_thr):
 def crop_and_save_img(info, windows, window_anns, img_dir, no_padding,
                       padding_value, save_dir, anno_dir, img_ext):
     """
-
     Args:
         info (dict): Image's information.
         windows (np.array): information of sliding windows.
@@ -288,7 +279,6 @@ def crop_and_save_img(info, windows, window_anns, img_dir, no_padding,
         save_dir (str): Save filename.
         anno_dir (str): Annotation filename.
         img_ext (str): Picture suffix.
-
     Returns:
         list[dict]: Information of paths.
     """
@@ -344,7 +334,10 @@ def crop_and_save_img(info, windows, window_anns, img_dir, no_padding,
                     outline = ' '.join(list(map(str, obj['bboxes'][idx])))
                     diffs = str(
                         obj['diffs'][idx]) if not obj['trunc'][idx] else '2'
-                    outline = outline + ' ' + obj['labels'][idx] + ' ' + diffs
+                    a = outline + ' ' + obj['labels'][idx]
+                    a = a.replace('\n', '')
+                    outline = a + ' ' + diffs
+                    # outline = outline + ' ' + obj['labels'][idx] + ' ' + diffs
                     f_out.write(outline + '\n')
 
     return patch_infos
@@ -354,7 +347,6 @@ def single_split(arguments, sizes, gaps, img_rate_thr, iof_thr, no_padding,
                  padding_value, save_dir, anno_dir, img_ext, lock, prog, total,
                  logger):
     """
-
     Args:
         arguments (object): Parameters.
         sizes (list): List of window's sizes.
@@ -370,7 +362,6 @@ def single_split(arguments, sizes, gaps, img_rate_thr, iof_thr, no_padding,
         prog (object): Progress of Manager.
         total (object): Length of infos.
         logger (object): Logger.
-
     Returns:
         list[dict]: Information of paths.
     """
@@ -398,10 +389,8 @@ def single_split(arguments, sizes, gaps, img_rate_thr, iof_thr, no_padding,
 
 def setup_logger(log_path):
     """Setup logger.
-
     Args:
         log_path (str): Path of log.
-
     Returns:
         object: Logger.
     """
@@ -421,12 +410,10 @@ def setup_logger(log_path):
 
 def translate(bboxes, x, y):
     """Map bboxes from window coordinate back to original coordinate.
-
     Args:
         bboxes (np.array): bboxes with window coordinate.
         x (float): Deviation value of x-axis.
         y (float): Deviation value of y-axis
-
     Returns:
         np.array: bboxes with original coordinate.
     """
@@ -437,12 +424,10 @@ def translate(bboxes, x, y):
 
 def load_dota(img_dir, ann_dir=None, nproc=10):
     """Load DOTA dataset.
-
     Args:
         img_dir (str): Path of images.
         ann_dir (str): Path of annotations.
         nproc (int): number of processes.
-
     Returns:
         list: Dataset's contents.
     """
@@ -469,12 +454,10 @@ def load_dota(img_dir, ann_dir=None, nproc=10):
 
 def _load_dota_single(imgfile, img_dir, ann_dir):
     """Load DOTA's single image.
-
     Args:
         imgfile (str): Filename of single image.
         img_dir (str): Path of images.
         ann_dir (str): Path of annotations.
-
     Returns:
         dict: Content of single image.
     """
@@ -494,10 +477,8 @@ def _load_dota_single(imgfile, img_dir, ann_dir):
 
 def _load_dota_txt(txtfile):
     """Load DOTA's txt annotation.
-
     Args:
         txtfile (str): Filename of single txt annotation.
-
     Returns:
         dict: Annotation of single image.
     """
