@@ -14,7 +14,7 @@ from convert_res import get_file_basename
 # image_root = '/workspace/pycharm_project/Dataset/train_overlap/images/'
 # label_root = '#'
 
-data_root = '/workspace/pycharm_project/Dataset/extra_original/'
+data_root = '/workspace/pycharm_project/mmrotate/data/split_ss_2023df/extra/'
 image_root = data_root + 'images/'
 label_root = data_root + 'annfiles/'
 
@@ -25,7 +25,7 @@ def filp(img_path, label_path, filp_mode):
         img = cv2.imread(img_path)
         img = cv2.flip(img, filp_mode)  # -1,0,1
         bsname = get_file_basename(img_path)
-        cv2.imwrite(image_root + bsname + '_' + str(filp_mode) + '.tif', img)  # 存图
+        cv2.imwrite(image_root + bsname + '_' + str(filp_mode) + '.png', img)  # 存图
         if label_path == '#':
             pass
         else:
@@ -36,6 +36,7 @@ def filp(img_path, label_path, filp_mode):
                     for i in range(0, 8):
                         position = l.split(' ')[i]
                         data.append(float(position))
+                    data.append(l.split(' ')[-2])
                     data.append(l.split(' ')[-1])
                     if filp_mode == 0:  # v
                         data[1] = 1024.0 - data[1]
@@ -62,7 +63,7 @@ def filp(img_path, label_path, filp_mode):
                         out_str = ''
                         for i in range(0, 8):
                             out_str = out_str + str(data[i]) + ' '
-                        out_str = out_str + data[8]
+                        out_str = out_str + data[8] + ' ' + data[9]
                         f_out.write(out_str)
     else:
         pass
@@ -73,8 +74,8 @@ def process_dataset():
     for f in tqdm(files):
         imagePath = os.path.join(image_root, f)
         labelPath = os.path.join(label_root, f)
-        labelPath = labelPath.replace('.tif', '.txt')
-        mode_list = [-1, 0, 1]
+        labelPath = labelPath.replace('.png', '.txt')
+        mode_list = [-2, -1, 0, 1, 2]
         mode = random.choice(mode_list)
         # print(imagePath)
         # print(labelPath)
@@ -120,7 +121,7 @@ def vvv(img_path, txt_path):
 
 
 def vvvvv(mode):
-    img_path = '/workspace/pycharm_project/mmrotate/data/2023/train/images/run2_train_00003.tif'
+    img_path = '/workspace/pycharm_project/mmrotate/data/2023/train/images/run2_train_00003.png'
     txt_path = '/workspace/pycharm_project/mmrotate/data/2023/train/labels/run2_train_00003.txt'
     count = 0
     with open(txt_path, "r", encoding='utf-8') as f:
@@ -210,8 +211,8 @@ def draw_box():
             # bbox = []
             # for i in range(3, 11):
             #     bbox.append(int(row[i]))
-            if os.path.exists(outdir + file_name.replace('.tif', '') + '.jpg'):
-                img = cv2.imread(outdir + file_name.replace('.tif', '') + '.jpg')
+            if os.path.exists(outdir + file_name.replace('.png', '') + '.jpg'):
+                img = cv2.imread(outdir + file_name.replace('.png', '') + '.jpg')
             else:
                 img = cv2.imread(tests_root + file_name)
 
@@ -234,14 +235,14 @@ def draw_box():
             cv2.drawContours(img, [box], 0, (0, 0, 255), 2)
             cv2.putText(img, label, (int(eval(row[3])), int(eval(row[4]))), font, 1, (0, 0, 255), 1)
 
-            cv2.imwrite(outdir + file_name.replace('.tif', '') + '.jpg', img)
+            cv2.imwrite(outdir + file_name.replace('.png', '') + '.jpg', img)
             count += 1
             # if count == 100:
             #     break
 
 
 if __name__ == "__main__":
-    # img_path = '/workspace/pycharm_project/mmrotate/data/2023/train/images/run2_train_00039_-1.tif'
+    # img_path = '/workspace/pycharm_project/mmrotate/data/2023/train/images/run2_train_00039_-1.png'
     # txt_path = '/workspace/pycharm_project/mmrotate/data/2023/train/labels/run2_train_00039_-1.txt'
     # # filp(img_path, txt_path, -1)
     # vvv(img_path, txt_path)
