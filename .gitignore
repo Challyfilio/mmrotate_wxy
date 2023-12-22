@@ -126,10 +126,11 @@ mmrotate/.mim
 *.tar
 *.pth
 *.zip
-data
-#2023df
+#data/
+#2023df/
 note.md
 command.md
+#tools/
 
 # 录用后开源
 mmrotate/
